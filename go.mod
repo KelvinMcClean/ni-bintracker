@@ -1,4 +1,4 @@
-module main
+module bintracker
 
 go 1.26.5
 

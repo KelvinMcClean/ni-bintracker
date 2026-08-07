@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bintracker/internal/bintracker"
+	"bintracker/internal/service"
 	"fmt"
 	"log"
 
@@ -11,13 +13,13 @@ func main() {
 	config, err := toml.LoadFile("config.toml")
 	if err != nil {
 		log.Fatal(err)
-	} else {
-
-		// retrieve data directly
-
-		homeId := config.Get("house.id").(int64)
-		council := config.Get("council.name").(string)
-		token := config.Get("calender.token").(string)
-		fmt.Println("Home ID is", homeId, "and council is", council, "and token is", token)
 	}
+	var cfg bintracker.Config
+	err = config.Unmarshal(&cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Config", cfg)
+	bins := service.GetBins(cfg)
+	fmt.Println(bins)
 }
