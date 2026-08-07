@@ -3,93 +3,64 @@ package gateway
 import (
 	"bintracker/internal/bintracker"
 	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
+	"time"
 )
 
-func BinController(config bintracker.Config) Response {
-	return BuildMockResponse()
+type APIClient struct {
+	BaseURL    *url.URL
+	HTTPClient *http.Client
 }
 
-func BuildMockResponse() Response {
-	jsonData := `{
-    "status": "CollectionDatesFound",
-    "message": "4 collection date(s) found for property 123456789",
-    "lastWeek": [
-        {
-            "date": "2026-07-30T00:00:00",
-            "dayOfWeekName": "Thursday",
-            "bins": [
-                {
-                    "colourLabel": "Grey",
-                    "colour": "Grey",
-                    "name": "General waste bin",
-                    "capacity": "240L",
-                    "type": "BIN",
-                    "uprn": "123456789"
-                }
-            ]
-        }
-    ],
-    "thisWeek": [
-        {
-            "date": "2026-08-04T00:00:00",
-            "dayOfWeekName": "Tuesday",
-            "bins": [
-                {
-                    "colourLabel": "Brown/green",
-                    "colour": "Brown",
-                    "name": "Garden and food waste bin",
-                    "capacity": "240L",
-                    "type": "BIN",
-                    "uprn": "123456789"
-                },
-                {
-                    "colourLabel": "",
-                    "colour": "Yellow",
-                    "name": "Glass container",
-                    "capacity": "240L",
-                    "type": "CONTAINER",
-                    "uprn": "123456789"
-                }
-            ]
-        },
-        {
-            "date": "2026-08-06T00:00:00",
-            "dayOfWeekName": "Thursday",
-            "bins": [
-                {
-                    "colourLabel": "Blue",
-                    "colour": "Blue",
-                    "name": "Recycling bin",
-                    "capacity": "240L",
-                    "type": "BIN",
-                    "uprn": "123456789"
-                }
-            ]
-        }
-    ],
-    "nextWeek": [
-        {
-            "date": "2026-08-13T00:00:00",
-            "dayOfWeekName": "Thursday",
-            "bins": [
-                {
-                    "colourLabel": "Grey",
-                    "colour": "Grey",
-                    "name": "General waste bin",
-                    "capacity": "240L",
-                    "type": "BIN",
-                    "uprn": "123456789"
-                }
-            ]
-        }
-    ]
-}`
+func NewAPIClient(baseURL string) (*APIClient, error) {
+	parsedURL, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, err
+	}
 
-	var response Response
-	err := json.Unmarshal([]byte(jsonData), &response)
+	return &APIClient{
+		BaseURL: parsedURL,
+		HTTPClient: &http.Client{
+			Timeout: 10 * time.Second,
+		},
+	}, nil
+}
+
+func GetBins(cfg bintracker.Config) Response {
+	client, err := NewAPIClient("https://ardsandnorthdownbincalendar.azurewebsites.net/api")
 	if err != nil {
 		panic(err)
 	}
-	return response
+	payload, err := client.getBins(cfg)
+	if err != nil {
+		panic(err)
+	}
+	return payload
+}
 
+func (c *APIClient) getBins(cfg bintracker.Config) (Response, error) {
+	// Construct the request URL
+	endpoint := c.BaseURL.JoinPath("collectiondates", fmt.Sprintf("%d", cfg.House.Id))
+	query := endpoint.Query()
+	endpoint.RawQuery = query.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, endpoint.String(), nil)
+
+	if err != nil {
+		return Response{}, fmt.Errorf("failed to create request: %w", err)
+	}
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return Response{}, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	fmt.Printf("API responded with status: %d\n", resp.StatusCode)
+	var response Response
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return Response{}, fmt.Errorf("failed to decode response: %w", err)
+	}
+	return response, nil
 }
