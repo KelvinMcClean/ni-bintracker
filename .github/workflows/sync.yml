@@ -1,9 +1,10 @@
 name: Bin Schedule Calendar Sync
+run-name: 'Sync Bins to Google Calendar - ${{ github.event_name == 'schedule' && 'Scheduled' || 'Manual' }}'
 
 on:
   schedule:
-    - cron: '0 8 * * 0'
-  workflow_dispatch: 
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
 
 jobs:
   sync:
