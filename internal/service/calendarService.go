@@ -166,7 +166,7 @@ func addEventToCalendar(srv *calendar.Service, collection bintracker.Bin, config
 			Overrides: []*calendar.EventReminder{
 				{
 					Method:  "popup",
-					Minutes: 18 * 60, // 6.30 PM the night before
+					Minutes: ((5 * 60) + 30), // 6.30 PM the night before
 				},
 			},
 			ForceSendFields: []string{"UseDefault"}, // Forces Go to serialize "useDefault": false
