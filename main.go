@@ -3,7 +3,6 @@ package main
 import (
 	"bintracker/internal/bintracker"
 	"bintracker/internal/service"
-	"fmt"
 	"log"
 
 	"github.com/pelletier/go-toml"
@@ -22,8 +21,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Config", cfg)
 	bins := service.GetBins(cfg)
 	service.AddBinsToCalendar(cfg, bins)
-	fmt.Println(bins)
 }
