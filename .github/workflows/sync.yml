@@ -1,0 +1,32 @@
+name: Bin Schedule Calendar Sync
+
+on:
+  schedule:
+    - cron: '0 8 * * 0'
+  workflow_dispatch: 
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Create credentials and token files
+        run: |
+          echo "$CREDENTIALS_JSON" > credentials.json
+          echo "$TOKEN_JSON" > token.json
+          echo "$TOML_CONFIG" > config.toml
+        env:
+          CREDENTIALS_JSON: ${{ secrets.CREDENTIALS }}
+          TOKEN_JSON: ${{ secrets.TOKEN }}
+          TOML_CONFIG: ${{ secrets.TOML }}
+
+      - name: Run Bin Sync
+        run: go run main.go
