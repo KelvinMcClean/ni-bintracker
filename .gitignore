@@ -31,3 +31,7 @@ go.work.sum
 # .idea/
 # .vscode/
 config.toml
+credentials.json
+vendor
+__debug_bin.*
+token.json

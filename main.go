@@ -9,8 +9,11 @@ import (
 	"github.com/pelletier/go-toml"
 )
 
+const credentialsFile = "credentials.json"
+const configFile = "config.toml"
+
 func main() {
-	config, err := toml.LoadFile("config.toml")
+	config, err := toml.LoadFile(configFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -21,5 +24,6 @@ func main() {
 	}
 	fmt.Println("Config", cfg)
 	bins := service.GetBins(cfg)
+	service.AddBinsToCalendar(cfg, bins)
 	fmt.Println(bins)
 }

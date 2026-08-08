@@ -7,4 +7,5 @@ number = 0
 name = "AND"
 
 [calendar]
-token= ""
+// From Google Calendar (Settings > Integrate Calendar > Calendar ID)
+id= "id@id.calendar.google.com"

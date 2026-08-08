@@ -8,7 +8,7 @@ import (
 func getBins(cfg bintracker.Config) []bintracker.Bin {
 	payload := gateway.GetBins(cfg)
 	bins := []bintracker.Bin{}
-	bins = appendBinsFromResponse(bins, payload.LastWeek)
+	//bins = appendBinsFromResponse(bins, payload.LastWeek)
 	bins = appendBinsFromResponse(bins, payload.ThisWeek)
 	bins = appendBinsFromResponse(bins, payload.NextWeek)
 	return bins

@@ -10,6 +10,6 @@ type Config struct {
 		Name string `toml:"name"`
 	}
 	Calendar struct {
-		Token string `toml:"token"`
+		ID string `toml:"id"`
 	}
 }
