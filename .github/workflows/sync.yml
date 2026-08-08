@@ -1,5 +1,5 @@
 name: Bin Schedule Calendar Sync
-run-name: 'Sync Bins to Google Calendar - ${{ github.event_name == 'schedule' && 'Scheduled' || 'Manual' }}'
+run-name: Sync Bins to Google Calendar - ${{ github.event_name == 'schedule' && 'Scheduled' || 'Manual' }}
 
 on:
   schedule:
