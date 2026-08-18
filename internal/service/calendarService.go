@@ -140,8 +140,10 @@ func addBinsToCalendar(calendarService *calendar.Service, bins []bintracker.Bin,
 func addEventToCalendar(srv *calendar.Service, collection bintracker.Bin, config bintracker.Config) error {
 	councilLayout := "2006-01-02T15:04:05"
 	parsedDate, err := time.Parse(councilLayout, collection.Date)
+	endOfDay := parsedDate.Add(24 * time.Hour)
 	if err != nil {
 		parsedDate, err = time.Parse("2006-01-02", collection.Date)
+		endOfDay = parsedDate.Add(24 * time.Hour)
 		if err != nil {
 			return fmt.Errorf("could not parse date %s: %v", collection.Date, err)
 		}
@@ -150,6 +152,7 @@ func addEventToCalendar(srv *calendar.Service, collection bintracker.Bin, config
 	colourEmoji, icon := getColourEmoji(collection.Colour)
 
 	dateStr := parsedDate.Format("2006-01-02")
+	endDateStr := endOfDay.Format("2006-01-02")
 
 	event := &calendar.Event{
 		Summary:     fmt.Sprintf("%s %s %s Collection %s", icon, colourEmoji, collection.Name, icon),
@@ -158,8 +161,9 @@ func addEventToCalendar(srv *calendar.Service, collection bintracker.Bin, config
 			Date: dateStr,
 		},
 		End: &calendar.EventDateTime{
-			Date: dateStr,
+			Date: endDateStr,
 		},
+		EventLabelId: getCalendarLabelID(collection.Colour),
 		// Optional: Add a reminder for 6.30 PM the night before
 		Reminders: &calendar.EventReminders{
 			UseDefault: false,
@@ -188,6 +192,7 @@ func addEventToCalendar(srv *calendar.Service, collection bintracker.Bin, config
 	fmt.Printf("Event created: %s\n", resp.HtmlLink)
 	return nil
 }
+
 
 func eventExists(srv *calendar.Service, calendarID string, dateStr string, summary string) (bool, error) {
 	t, err := time.Parse("2006-01-02", dateStr)
@@ -234,5 +239,23 @@ func getColourEmoji(colour string) (string, string) {
 		return "🥛", "🗑️"
 	default:
 		return "🗑️", "🗑️"
+	}
+}
+
+
+func getCalendarLabelID(s string) string {
+	switch s {
+	case "Grey", "Black":
+		return "#B39DDB"
+	case "Blue":
+		return "#4284F5"
+	case "Green", "Brown":
+		return "#33B679"
+	case "Red":
+		return "#F4511E"
+	case "Yellow":
+		return "#F4B400"
+	default:
+		return "#9E9E9E" // Default grey
 	}
 }
