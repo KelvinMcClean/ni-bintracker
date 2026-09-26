@@ -21,7 +21,59 @@ const credentialsFile = "credentials.json"
 func AddBinsToCalendar(cfg bintracker.Config, bins []bintracker.Bin) {
 	client := getClient()
 	calendarService := getCalendar(cfg, client)
+	removeExpiredEvents(calendarService, cfg.Calendar.ID)
 	addBinsToCalendar(calendarService, bins, cfg)
+}
+
+func removeExpiredEvents(srv *calendar.Service, calendarID string) error {
+	loc, err := time.LoadLocation("Europe/London")
+	if err != nil {
+		return fmt.Errorf("could not load timezone: %w", err)
+	}
+
+	now := time.Now().In(loc)
+	today := time.Date(
+		now.Year(),
+		now.Month(),
+		now.Day(),
+		0, 0, 0, 0,
+		loc,
+	)
+
+	pageToken := ""
+
+	for {
+		call := srv.Events.List(calendarID).
+			PrivateExtendedProperty("source=ni-bintracker").
+			TimeMax(today.Format(time.RFC3339)).
+			SingleEvents(true).
+			ShowDeleted(false).
+			MaxResults(2500)
+
+		if pageToken != "" {
+			call = call.PageToken(pageToken)
+		}
+
+		events, err := call.Do()
+		if err != nil {
+			return fmt.Errorf("could not list expired events: %w", err)
+		}
+
+		for _, event := range events.Items {
+			if err := srv.Events.Delete(calendarID, event.Id).Do(); err != nil {
+				return fmt.Errorf("could not delete event %q: %w", event.Summary, err)
+			}
+
+			log.Printf("Deleted expired event: %s", event.Summary)
+		}
+
+		pageToken = events.NextPageToken
+		if pageToken == "" {
+			break
+		}
+	}
+
+	return nil
 }
 
 func getClient() *http.Client {
@@ -175,6 +227,11 @@ func addEventToCalendar(srv *calendar.Service, collection bintracker.Bin, config
 			},
 			ForceSendFields: []string{"UseDefault"}, // Forces Go to serialize "useDefault": false
 		},
+		ExtendedProperties: &calendar.EventExtendedProperties{
+			Private: map[string]string{
+				"source": "ni-bintracker",
+		},
+},
 	}
 	exists, err := eventExists(srv, config.Calendar.ID, dateStr, event.Summary)
 	if err != nil {
